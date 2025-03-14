@@ -1,6 +1,6 @@
-package org.davistiba.gui;
+package org.mchristos.gui;
 
-import org.davistiba.game.*;
+import org.mchristos.game.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,14 +43,18 @@ public class GUI extends JFrame {
         difficultyMapping.put(4, 12);
         this.executor = Executors.newSingleThreadScheduledExecutor();
         MY_HELVETICA = new Font(Font.DIALOG, Font.PLAIN, 12);
-        start();
+        this.start();
     }
 
+    /**
+     * Start the match
+     */
     private void start() {
         settingsPopup();
         game = new Game();
         possibleMoves = new ArrayList<>();
         hintMove = null;
+        System.gc(); // clear up previous match memory
         setup();
         if (SettingsPanel.hintMode) {
             onHintClick();
@@ -87,15 +91,15 @@ public class GUI extends JFrame {
         slider.setValue(3);
         // force takes option
         JRadioButton forceTakesButton = new JRadioButton("Force Takes");
-        forceTakesButton.setSelected(Settings.FORCETAKES);
+        forceTakesButton.setSelected(GlobalSettings.FORCETAKES);
         // who gets first move?
         ButtonGroup buttonGroup = new ButtonGroup();
         JRadioButton humanFirstRadioButton = new JRadioButton("You Play First");
         JRadioButton aiRadioButton = new JRadioButton("Computer Plays First");
         buttonGroup.add(humanFirstRadioButton);
         buttonGroup.add(aiRadioButton);
-        aiRadioButton.setSelected(Settings.FIRSTMOVE == Player.AI);
-        humanFirstRadioButton.setSelected(Settings.FIRSTMOVE == Player.HUMAN);
+        aiRadioButton.setSelected(GlobalSettings.FIRSTMOVE == Player.AI);
+        humanFirstRadioButton.setSelected(GlobalSettings.FIRSTMOVE == Player.HUMAN);
         // add components to panel
         panel.add(text1);
         panel.add(slider);
@@ -107,10 +111,10 @@ public class GUI extends JFrame {
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
         // process results
         if (result == JOptionPane.OK_OPTION) {
-            Settings.AI_DEPTH = difficultyMapping.get(slider.getValue());
-            logger.info("Selected AI depth = " + Settings.AI_DEPTH);
-            Settings.FIRSTMOVE = humanFirstRadioButton.isSelected() ? Player.HUMAN : Player.AI;
-            Settings.FORCETAKES = forceTakesButton.isSelected();
+            GlobalSettings.AI_DEPTH = difficultyMapping.get(slider.getValue());
+            logger.info("Selected AI depth = " + GlobalSettings.AI_DEPTH);
+            GlobalSettings.FIRSTMOVE = humanFirstRadioButton.isSelected() ? Player.HUMAN : Player.AI;
+            GlobalSettings.FORCETAKES = forceTakesButton.isSelected();
         } else {
             this.dispose();
             System.exit(0);
@@ -122,7 +126,7 @@ public class GUI extends JFrame {
      * Sets up initial GUI configuration.
      */
     public void setup() {
-        switch (Settings.FIRSTMOVE) {
+        switch (GlobalSettings.FIRSTMOVE) {
             case AI:
                 SettingsPanel.AIcolour = PieceColour.WHITE;
                 break;
@@ -154,7 +158,7 @@ public class GUI extends JFrame {
         this.pack();
         this.setVisible(true);
         this.setResizable(false);
-        if (Settings.FIRSTMOVE == Player.AI) {
+        if (GlobalSettings.FIRSTMOVE == Player.AI) {
             aiMove();
         }
     }
@@ -354,7 +358,7 @@ public class GUI extends JFrame {
                 possibleMoves = game.getValidMoves(pos);
                 updateCheckerBoard();
                 if (possibleMoves.isEmpty()) {
-                    MoveFeedback feedback = game.moveFeedbackClick(pos);
+                    MoveFeedback feedback = game.moveFeedbackClick();
                     updateText(feedback.toString());
                     if (feedback == MoveFeedback.FORCED_JUMP) {
                         // show movable jump pieces
@@ -429,7 +433,7 @@ public class GUI extends JFrame {
                 options,
                 options[1]);
         if (n == 0) {
-            start();
+            this.start();
         }
     }
 
